@@ -1,3 +1,22 @@
+## 1.2.0
+
+Updates both native SDKs. No Dart API changes; upgrading requires no code changes.
+
+### iOS
+
+Ships [LinkKit 7.2.2](https://github.com/plaid/plaid-link-ios/releases/tag/7.2.2), which also picks up
+[7.2.1](https://github.com/plaid/plaid-link-ios/releases/tag/7.2.1):
+
+- Fixed Link opening at the width the window had when the session was created, when presented with a view controller or a custom presentation handler. Unfolding an iPhone Duo or resizing an iPad multitasking window before opening Link left it in a column at the old width.
+- Fixed a crash affecting Layer customers.
+
+### Android
+
+Ships [Plaid Link Android SDK 6.3.0](https://github.com/plaid/plaid-link-android/releases/tag/v6.3.0):
+
+- Added automatic session handoff for Embedded Link, matching the behavior iOS gained in LinkKit 7.2.0.
+- Fixed password-manager autofill on the Link credentials screen when the password manager requires unlock or confirmation before filling.
+
 ## 1.1.0
 
 Updates both native SDKs. No Dart API changes; upgrading requires no code changes.
