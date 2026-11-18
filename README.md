@@ -109,7 +109,7 @@ final session = await createPlaidLinkSession(
 await session.open();
 ```
 
-Layer, Headless, Embedded Search, and FinanceKit use the same public names:
+Layer, Embedded Search, and FinanceKit use the same public names:
 
 ```dart
 final layerSession = await createPlaidLayerSession(
@@ -122,17 +122,6 @@ final layerSession = await createPlaidLayerSession(
 await layerSession.submit(const SubmissionData(phoneNumber: '+15551234567'));
 // After onEvent receives LinkEventName.layerReady:
 await layerSession.open();
-
-final headlessSession = await createPlaidHeadlessSession(
-  LinkTokenConfiguration(
-    token: linkToken,
-    onSuccess: (_) {},
-    onExit: (_) {},
-    onEvent: (_) {},
-  ),
-);
-
-await headlessSession.start();
 
 // Gate on FinanceKit availability before syncing, without prompting the user.
 if (await financeKitStatus() == FinanceKitStatus.authorized) {
@@ -184,7 +173,7 @@ still exposed to the native SDKs for wrapper detection through
 ## Example App
 
 The example app mirrors the React Native example visually and includes screens
-for regular Link, Layer, Headless, Embedded Search, and FinanceKit:
+for regular Link, Layer, Embedded Search, and FinanceKit:
 
 ```sh
 cd example
@@ -210,7 +199,6 @@ on `type` (with an `unknown` fallback) or read `code` directly. Common codes:
 - `INVALID_TOKEN`: the token argument was empty.
 - `LINK_SESSION_CREATE_ERROR`: native Link session creation failed.
 - `LAYER_SESSION_CREATE_ERROR`: native Layer session creation failed.
-- `HEADLESS_SESSION_CREATE_ERROR`: native Headless session creation failed.
 - `PLAID_NO_ACTIVITY`: Android could not find the current `Activity`.
 - `PLAID_NO_VC`: iOS could not find a presenting view controller.
 - `PLAID_NO_LAYER_SESSION`: `submit` was called before creating a Layer session.
@@ -237,7 +225,7 @@ Apple FinanceKit entitlement and an eligible Item. Use
 `FinanceKitSyncBehavior.simulated` for development where appropriate.
 
 Use sandbox Link tokens and Plaid test institutions for regular Link, Layer,
-Headless, and Embedded Search smoke tests.
+and Embedded Search smoke tests.
 
 Before shipping OAuth, validate the real redirect configuration on a device:
 
@@ -257,12 +245,10 @@ Implemented:
 - `createPlaidLayerSession`
 - `PlaidLayerSession.open()`
 - `PlaidLayerSession.submit(SubmissionData data)`
-- `createPlaidHeadlessSession`
-- `PlaidHeadlessSession.start()`
-- `PlaidLinkSession.dispose()` (and Layer/Headless) for callback cleanup
+- `PlaidLinkSession.dispose()` (and Layer) for callback cleanup
 - `syncFinanceKit`
 - `PlaidEmbeddedSearchView`
 - `PlaidLink.sdkVersion`
 - Success, exit, and event payload parsing
-- iOS and Android native regular Link, Layer, Headless, and Embedded Search
+- iOS and Android native regular Link, Layer, and Embedded Search
 - iOS native FinanceKit sync; Android returns a FinanceKit unsupported error
