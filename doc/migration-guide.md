@@ -79,7 +79,7 @@ Future<void> openLink() async {
 On iOS, `open(true)` presents Link full screen. On Android, the flag has no
 effect.
 
-## Callbacks
+## Callbacks and events
 
 After `onExit`, or after the `HANDOFF` event that follows `onSuccess`, the SDK
 removes the session's callbacks.
@@ -172,7 +172,7 @@ name in the Plaid Dashboard.
 The SDK has no `close()` method. Link closes when the user exits, and your
 `onExit` callback runs.
 
-## Checklist
+## Migration checklist
 
 - Replace `plaid_flutter` with `plaid_link_flutter` in `pubspec.yaml`, and
   update your imports.
