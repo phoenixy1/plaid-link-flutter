@@ -15,6 +15,7 @@ your widget state, and call the method on that session.
 - [Standard Link](#standard-link)
 - [Callbacks and events](#callbacks-and-events)
 - [Layer](#layer)
+- [Headless Link](#headless-link)
 - [Embedded Search](#embedded-search)
 - [FinanceKit](#financekit)
 - [OAuth and redirect handling](#oauth-and-redirect-handling)
@@ -31,6 +32,7 @@ your widget state, and call the method on that session.
 | Callback model | Global streams: `PlaidLink.onSuccess`, `PlaidLink.onExit`, `PlaidLink.onEvent`, `PlaidLink.onLoad` | Per-session callbacks passed in the configuration |
 | Link readiness | Wait for create completion or `onLoad` stream | Use `LinkTokenConfiguration.onLoad` |
 | Layer | `PlaidLink.submit(...)` on the global Link object | `PlaidLayerSession.submit(...)` |
+| Headless (deprecated) | Global create/open pattern | `createPlaidHeadlessSession(...)` and `PlaidHeadlessSession.start()` |
 | Embedded | `PlaidEmbeddedView` | `PlaidEmbeddedSearchView` |
 | FinanceKit | Not available | `syncFinanceKit(...)` on iOS |
 | Web | Supported by the community package | Not supported in this SDK |
@@ -169,7 +171,7 @@ the `HANDOFF` event arrives, so you still receive `HANDOFF` in `onEvent`. Event
 callbacks are otherwise non-terminal.
 
 The SDK supports one active non-embedded callback set at a time. Creating a new
-Link or Layer session replaces the previous non-embedded callbacks.
+Link, Layer, or Headless session replaces the previous non-embedded callbacks.
 
 ## Layer
 
@@ -213,6 +215,41 @@ Future<void> submitPhoneNumber(String phoneNumber) async {
 If you receive `LAYER_NOT_AVAILABLE`, you can submit the user's date of birth in
 a second `submit` call. For details, see the
 [Layer docs](https://plaid.com/docs/layer/).
+
+## Headless Link
+
+Headless Link is deprecated. It's available only to existing clients that Plaid
+has already enabled for it.
+
+Headless uses `LinkTokenConfiguration`, but it creates a
+`PlaidHeadlessSession`. Start the flow with `start()` instead of opening a Link
+view.
+
+```dart
+PlaidHeadlessSession? _headlessSession;
+
+Future<void> createHeadlessSession(String linkToken) async {
+  _headlessSession = await createPlaidHeadlessSession(
+    LinkTokenConfiguration(
+      token: linkToken,
+      onSuccess: (success) {
+        print(success.publicToken);
+      },
+      onExit: (exit) {
+        print(exit.error?.errorMessage);
+      },
+      onEvent: (event) {
+        print(event.eventName);
+      },
+      onLoad: () {
+        _headlessSession?.start();
+      },
+    ),
+  );
+}
+```
+
+You can also call `start()` later from your own UI once the session is ready.
 
 ## Embedded Search
 
@@ -294,6 +331,8 @@ native UI and handle `onExit`.
   `onLoad` callbacks.
 - Rename `LinkEvent.name` reads to `LinkEvent.eventName`.
 - Use `LayerTokenConfiguration` and `PlaidLayerSession` for Layer.
+- Use `createPlaidHeadlessSession()` and `PlaidHeadlessSession.start()` for
+  Headless (deprecated).
 - Use `PlaidEmbeddedSearchView` for Embedded Search.
 - Gate FinanceKit behind iOS checks in your app code.
 - Remove calls to `PlaidLink.resumeAfterTermination()` and `PlaidLink.close()`.
