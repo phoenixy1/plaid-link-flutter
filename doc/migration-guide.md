@@ -118,8 +118,9 @@ replaces the previous session's callbacks.
 
 ## Layer
 
-Layer has its own configuration and session type. Create its token with
-`/session/token/create`. Submit the user's phone number, then open Layer when
+Layer now has its own configuration and session type. Use a Layer-compatible
+link token, created with `/session/token/create`; a regular Link token is not
+interchangeable. Submit the user's phone number, then open Layer when
 you receive `LAYER_READY`:
 
 ```dart
@@ -210,15 +211,21 @@ During development, you can use `FinanceKitSyncBehavior.simulated` instead of
 
 ## OAuth And Redirect Handling
 
-The SDK has no `resumeAfterTermination` method. The native Plaid SDKs resume
-OAuth flows. On iOS, register your redirect URI as a Universal Link in the Plaid
-Dashboard and your app's entitlements. On Android, register your app's package
-name in the Plaid Dashboard.
+The community package exposed `PlaidLink.resumeAfterTermination(...)`. The
+official Flutter SDK does not expose a separate resume method. OAuth redirect
+continuation is handled by the native Plaid SDKs and your app's platform
+configuration.
+
+For iOS, configure your Plaid redirect URI as a Universal Link in the Plaid
+Dashboard and in your app entitlement setup. For Android, register the app
+package name in the Plaid Dashboard and follow the native Android setup for the
+Link SDK version used by this package.
 
 ## Close Handling
 
-The SDK has no `close()` method. Link closes when the user exits, and your
-`onExit` callback runs.
+The community package exposed `PlaidLink.close()`. The official session API does
+not expose a Flutter-level close method. Let the Link flow terminate through the
+native UI and handle `onExit`.
 
 ## Migration Checklist
 
