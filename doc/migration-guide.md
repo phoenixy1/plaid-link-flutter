@@ -32,7 +32,7 @@ your widget state, and call the method on that session.
 | Callback model | Global streams: `PlaidLink.onSuccess`, `PlaidLink.onExit`, `PlaidLink.onEvent`, `PlaidLink.onLoad` | Per-session callbacks passed in the configuration |
 | Link readiness | Wait for create completion or `onLoad` stream | Use `LinkTokenConfiguration.onLoad` |
 | Layer | `PlaidLink.submit(...)` on the global Link object | `PlaidLayerSession.submit(...)` |
-| Headless (deprecated) | Global create/open pattern | `createPlaidHeadlessSession(...)` and `PlaidHeadlessSession.start()` |
+| Headless | Global create/open pattern | `createPlaidHeadlessSession(...)` and `PlaidHeadlessSession.start()` |
 | Embedded | `PlaidEmbeddedView` | `PlaidEmbeddedSearchView` |
 | FinanceKit | Not available | `syncFinanceKit(...)` on iOS |
 | Web | Supported by the community package | Not supported in this SDK |
@@ -218,9 +218,6 @@ a second `submit` call. For details, see the
 
 ## Headless Link
 
-Headless Link is deprecated. It's available only to existing clients that Plaid
-has already enabled for it.
-
 Headless uses `LinkTokenConfiguration`, but it creates a
 `PlaidHeadlessSession`. Start the flow with `start()` instead of opening a Link
 view.
@@ -332,7 +329,7 @@ native UI and handle `onExit`.
 - Rename `LinkEvent.name` reads to `LinkEvent.eventName`.
 - Use `LayerTokenConfiguration` and `PlaidLayerSession` for Layer.
 - Use `createPlaidHeadlessSession()` and `PlaidHeadlessSession.start()` for
-  Headless (deprecated).
+  Headless.
 - Use `PlaidEmbeddedSearchView` for Embedded Search.
 - Gate FinanceKit behind iOS checks in your app code.
 - Remove calls to `PlaidLink.resumeAfterTermination()` and `PlaidLink.close()`.
