@@ -1,59 +1,80 @@
-# Migrating from `plaid_flutter` to `plaid_link_flutter`
+# Migration Guide: `plaid_flutter` to `plaid_link_flutter`
 
 `plaid_link_flutter` replaces the community `plaid_flutter` package's global
 `PlaidLink.create()` and `PlaidLink.open()` calls and event streams with session
 objects. You create a session for each flow, keep it in your widget state, and
 pass callbacks in its configuration.
 
-## What changed
+## What Changed
 
 | Area | `plaid_flutter` | `plaid_link_flutter` |
 | --- | --- | --- |
 | Package import | `package:plaid_flutter/plaid_flutter.dart` | `package:plaid_link_flutter/plaid_link_flutter.dart` |
-| Primary API | Global `PlaidLink.create()` and `PlaidLink.open()` | `createPlaidLinkSession()` returns a `PlaidLinkSession` |
-| Callbacks | Global streams: `PlaidLink.onSuccess`, `onExit`, `onEvent`, `onLoad` | Callbacks in the session's configuration |
+| Native SDKs | iOS 6.x, Android 5.x | iOS LinkKit 7.4.0, Android Link SDK 6.4.0 |
+| Primary API | Global `PlaidLink.create()` and `PlaidLink.open()` | `createPlaidLinkSession()` returns `PlaidLinkSession` |
+| Callback model | Global streams: `PlaidLink.onSuccess`, `PlaidLink.onExit`, `PlaidLink.onEvent`, `PlaidLink.onLoad` | Per-session callbacks passed in the configuration |
+| Link readiness | Wait for create completion or `onLoad` stream | Use `LinkTokenConfiguration.onLoad` |
 | Event name | `event.name` | `event.eventName` |
-| Layer | `PlaidLink.submit(...)` on the global object | `PlaidLayerSession.submit(...)` |
-| Embedded Search | `PlaidEmbeddedView` | `PlaidEmbeddedSearchView` |
-| FinanceKit | Not available | `syncFinanceKit(...)`, iOS only |
+| Layer | `PlaidLink.submit(...)` on the global Link object | `PlaidLayerSession.submit(...)` |
+| Embedded | `PlaidEmbeddedView` | `PlaidEmbeddedSearchView` |
+| FinanceKit | Not available | `syncFinanceKit(...)` on iOS |
 | OAuth resume | `PlaidLink.resumeAfterTermination(...)` | Handled by the native SDKs |
 | Closing Link | `PlaidLink.close()` | No Flutter method; handle `onExit` |
-| Flutter web | Supported | Not supported |
+| Web | Supported by the community package | Not supported in this SDK |
 
-## Requirements
+## Package And Platform Requirements
 
-Replace the dependency in `pubspec.yaml`:
+Replace the dependency:
 
 ```yaml
 dependencies:
   plaid_link_flutter: ^1.3.0
 ```
 
-Then update your imports:
+Then update imports:
 
 ```dart
 import 'package:plaid_link_flutter/plaid_link_flutter.dart';
 ```
 
-The SDK requires Flutter 3.29.3 or later, Dart 3.7 or later, iOS 15.0 or later,
-and Android `minSdk` 26 or later.
+Requirements:
+
+- Flutter `3.29.3+`
+- Dart `3.7+`
+- iOS `15.0+`
+- Android `minSdk 26+`
 
 ## Standard Link
 
-Before, with global streams and static methods:
+### Before
+
+The community package creates a global handler and opens it through static
+methods. Callbacks are usually wired through global streams.
 
 ```dart
-PlaidLink.onSuccess.listen((success) => print(success.publicToken));
-PlaidLink.onExit.listen((exit) => print(exit.error?.errorMessage));
-PlaidLink.onEvent.listen((event) => print(event.name));
+final successSubscription = PlaidLink.onSuccess.listen((success) {
+  print(success.publicToken);
+});
+
+final exitSubscription = PlaidLink.onExit.listen((exit) {
+  print(exit.error?.errorMessage);
+});
+
+final eventSubscription = PlaidLink.onEvent.listen((event) {
+  print(event.name);
+});
 
 await PlaidLink.create(
   configuration: LinkTokenConfiguration(token: linkToken),
 );
+
 await PlaidLink.open();
 ```
 
-After, with a session that owns its callbacks:
+### After
+
+Create a `PlaidLinkSession`, keep it alive for as long as you need to open Link,
+and pass callbacks directly to the configuration.
 
 ```dart
 PlaidLinkSession? _linkSession;
@@ -63,10 +84,18 @@ Future<void> createSession(String linkToken) async {
   _linkSession = await createPlaidLinkSession(
     LinkTokenConfiguration(
       token: linkToken,
-      onSuccess: (success) => print(success.publicToken),
-      onExit: (exit) => print(exit.error?.errorMessage),
-      onEvent: (event) => print(event.eventName),
-      onLoad: () => setState(() => _linkReady = true),
+      onSuccess: (success) {
+        print(success.publicToken);
+      },
+      onExit: (exit) {
+        print(exit.error?.errorMessage);
+      },
+      onEvent: (event) {
+        print(event.eventName);
+      },
+      onLoad: () {
+        setState(() => _linkReady = true);
+      },
     ),
   );
 }
@@ -79,7 +108,7 @@ Future<void> openLink() async {
 On iOS, `open(true)` presents Link full screen. On Android, the flag has no
 effect.
 
-## Callbacks and events
+## Callbacks And Events
 
 After `onExit`, or after the `HANDOFF` event that follows `onSuccess`, the SDK
 removes the session's callbacks.
@@ -100,8 +129,12 @@ Future<void> createLayerSession(String layerToken) async {
   _layerSession = await createPlaidLayerSession(
     LayerTokenConfiguration(
       token: layerToken,
-      onSuccess: (success) => print(success.publicToken),
-      onExit: (exit) => print(exit.error?.errorMessage),
+      onSuccess: (success) {
+        print(success.publicToken);
+      },
+      onExit: (exit) {
+        print(exit.error?.errorMessage);
+      },
       onEvent: (event) {
         if (event.eventName == LinkEventName.layerReady) {
           _layerSession?.open();
@@ -112,7 +145,12 @@ Future<void> createLayerSession(String layerToken) async {
 }
 
 Future<void> submitPhoneNumber(String phoneNumber) async {
-  await _layerSession?.submit(SubmissionData(phoneNumber: phoneNumber));
+  await _layerSession?.submit(
+    SubmissionData(
+      phoneNumber: phoneNumber,
+      params: <String, String>{'flow': 'signup'},
+    ),
+  );
 }
 ```
 
@@ -129,9 +167,18 @@ SizedBox(
   height: 420,
   child: PlaidEmbeddedSearchView(
     token: linkToken,
-    onSuccess: (success) => print(success.publicToken),
-    onExit: (exit) => print(exit.error?.errorMessage),
-    onEvent: (event) => print(event.eventName),
+    onSuccess: (success) {
+      print(success.publicToken);
+    },
+    onExit: (exit) {
+      print(exit.error?.errorMessage);
+    },
+    onEvent: (event) {
+      print(event.eventName);
+    },
+    onLoad: () {
+      print('Embedded Search loaded');
+    },
   ),
 );
 ```
@@ -153,35 +200,39 @@ try {
     ),
   );
 } on FinanceKitException catch (error) {
-  print('${error.code}: ${error.message}');
+  print(error.code);
+  print(error.message);
 }
 ```
 
 During development, you can use `FinanceKitSyncBehavior.simulated` instead of
 `live`.
 
-## OAuth
+## OAuth And Redirect Handling
 
 The SDK has no `resumeAfterTermination` method. The native Plaid SDKs resume
 OAuth flows. On iOS, register your redirect URI as a Universal Link in the Plaid
 Dashboard and your app's entitlements. On Android, register your app's package
 name in the Plaid Dashboard.
 
-## Closing Link
+## Close Handling
 
 The SDK has no `close()` method. Link closes when the user exits, and your
 `onExit` callback runs.
 
-## Migration checklist
+## Migration Checklist
 
-- Replace `plaid_flutter` with `plaid_link_flutter` in `pubspec.yaml`, and
-  update your imports.
-- Replace `PlaidLink.create()` and `PlaidLink.open()` with a session, and keep
-  the session in your widget state.
-- Move your stream listeners into the session's `onSuccess`, `onExit`,
-  `onEvent`, and `onLoad` callbacks.
-- Rename `event.name` to `event.eventName`.
-- Use `createPlaidLayerSession()` for Layer and `PlaidEmbeddedSearchView` for
-  Embedded Search.
+- Replace `plaid_flutter` with `plaid_link_flutter` in `pubspec.yaml`.
+- Update imports to `package:plaid_link_flutter/plaid_link_flutter.dart`.
+- Replace global `PlaidLink.create()` calls with a flow-specific create method.
+- Store the returned session object in widget or state-management scope.
+- Replace `PlaidLink.open()` with `PlaidLinkSession.open()`.
+- Move global stream listeners into `onSuccess`, `onExit`, `onEvent`, and
+  `onLoad` callbacks.
+- Rename `LinkEvent.name` reads to `LinkEvent.eventName`.
+- Use `LayerTokenConfiguration` and `PlaidLayerSession` for Layer.
+- Use `PlaidEmbeddedSearchView` for Embedded Search.
+- Gate FinanceKit behind iOS checks in your app code.
 - Remove calls to `resumeAfterTermination` and `close()`.
-- Test OAuth redirects with your production redirect URI setup.
+- Confirm your backend creates the correct link token type for each flow.
+- Re-test OAuth redirects using your app's production redirect URI setup.
