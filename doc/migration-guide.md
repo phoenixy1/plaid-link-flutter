@@ -81,8 +81,8 @@ effect.
 
 ## Callbacks
 
-After `onSuccess` or `onExit`, the SDK removes the session's callbacks.
-`onEvent` can fire many times.
+After `onExit`, or after the `HANDOFF` event that follows `onSuccess`, the SDK
+removes the session's callbacks.
 
 Only one Link or Layer session has callbacks at a time. Creating a new session
 replaces the previous session's callbacks.
@@ -140,9 +140,8 @@ On Android, show only one Embedded Search view at a time.
 
 ## FinanceKit
 
-FinanceKit is new in this SDK and works on iOS only. On Android,
-`syncFinanceKit` will throw a `FinanceKitException` with the code
-`UNSUPPORTED_ANDROID`.
+FinanceKit requires iOS 17.4 or later. On Android, `syncFinanceKit` will throw a
+`FinanceKitException` with the code `UNSUPPORTED_ANDROID`.
 
 ```dart
 try {
